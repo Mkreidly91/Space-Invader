@@ -6,66 +6,191 @@ source: https://sketchfab.com/3d-models/pixel-plane-da5c802719844a86b9464f73c633
 title: PIXEL PLANE
 */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useReducer } from 'react';
 import { useGLTF, useAnimations } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
+import { useSpring, animated } from '@react-spring/three';
+
+const initialMovementState = {
+  rotate_L: false,
+  rotate_R: false,
+  move_U: false,
+  move_D: false,
+  move_L: false,
+  move_R: false,
+};
+
+function movementReducer(state, action) {
+  switch (action.type) {
+    case 'rotate_L':
+      return { ...state, rotate_L: true, rotate_R: false };
+    case 'rotate_R':
+      return { ...state, rotate_R: true, rotate_L: false };
+    case 'move_U':
+      return { ...state, move_U: true, move_D: false };
+    case 'move_D':
+      return { ...state, move_D: !state.move_D, move_U: false };
+    case 'move_L':
+      return { ...state, move_L: true, move_L: false };
+    case 'move_R':
+      return { ...state, move_R: true, move_L: false };
+
+    case 'resetRotation': {
+      return {
+        ...state,
+
+        rotate_L: false,
+        rotate_R: false,
+      };
+    }
+
+    case 'default':
+      throw new Error('No such case exists');
+  }
+}
 
 export default function Fighter(props) {
   const group = useRef();
   const { nodes, materials, animations } = useGLTF('/3dModels/pixel_plane.glb');
-  const { actions, ref: planeRef } = useAnimations(animations, group);
+  const { actions } = useAnimations(animations, group);
 
-  useEffect(() => {
-    actions['ArmatureAction.001'].play();
+  const ROTATION_C = 0.5;
+  const MOVEMENT_C = 0.5;
 
-    document.addEventListener('keydown', (event) => {
-      if (group.current) {
-        console.log(event);
-        const { key } = event;
-        if (key === 'd') {
-          group.current.rotation.y = 0.2;
-          group.current.position.x += 2;
-        }
-        if (key === 'a') {
-          group.current.rotation.y = -0.2;
-          group.current.position.x -= 2;
-        }
-        if (key === 'w') {
-          group.current.position.z -= 20;
-        }
-        if (key === 's') {
-          group.current.position.z += 20;
-        }
-      }
-    });
+  const [pos, setPos] = useState([0, 0, 0]);
+  const [keys, setKeys] = useState({});
+  const [moveState, moveDispatch] = useReducer(
+    movementReducer,
+    initialMovementState
+  );
 
-    document.addEventListener('keyup', (event) => {
-      const { key } = event;
-      if (key === 'd') {
-        group.current.rotation.y = 0;
-      }
-      if (key === 'a') {
-        group.current.rotation.y = 0;
-      }
-    });
+  const { rotate_L, rotate_R, move_U, move_D, move_L, move_R } = moveState;
+  const [x, y, z] = pos;
+  const { rotation, position } = useSpring({
+    rotation: rotate_R
+      ? [Math.PI / 2, -ROTATION_C, 0]
+      : rotate_L
+      ? [Math.PI / 2, ROTATION_C, 0]
+      : [Math.PI / 2, 0, 0],
+    position: move_U
+      ? [x, y, z - MOVEMENT_C]
+      : move_D
+      ? [x, y, z + MOVEMENT_C]
+      : move_U && move_R
+      ? [x + MOVEMENT_C, y, z - MOVEMENT_C]
+      : move_U && move_L
+      ? [x - MOVEMENT_C, y, z - MOVEMENT_C]
+      : move_L
+      ? [x - MOVEMENT_C, y, z]
+      : move_L && move_D
+      ? [x - MOVEMENT_C, y, z + MOVEMENT_C]
+      : move_R
+      ? [x + MOVEMENT_C, y, z]
+      : move_R && move_D
+      ? [x + MOVEMENT_C, y, z - MOVEMENT_C]
+      : [x, y, z],
   });
 
-  // useFrame(({ clock }) => {
-  //   group.current.rotation.x += clock.getElapsedTime();
-  // });
+  useEffect(() => {
+    console.table(keys);
+    actions['ArmatureAction.001'].play();
+    if (group.current && moveState) {
+      const keyDownFunction = (event) => {
+        if (event.isComposing) return;
+
+        const { key } = event;
+        setKeys((prev) => {
+          return { ...prev, [key]: true };
+        });
+        if (keys.w && key === 'd') {
+          moveDispatch({ type: 'rotate_R' });
+          moveDispatch({ type: 'move_R' });
+          moveDispatch({ type: 'move_U' });
+          setPos((prev) => {
+            const [x, y, z] = prev;
+            return [x + MOVEMENT_C, y, z - MOVEMENT_C];
+          });
+        } else if (key === 'd') {
+          moveDispatch({ type: 'rotate_R' });
+          moveDispatch({ type: 'move_R' });
+
+          setPos((prev) => {
+            const [x, y, z] = prev;
+            return [x + MOVEMENT_C, y, z];
+          });
+        } else if (keys.w && key === 'a') {
+          moveDispatch({ type: 'rotate_L' });
+          moveDispatch({ type: 'move_L' });
+          moveDispatch({ type: 'move_U' });
+          setPos((prev) => {
+            const [x, y, z] = prev;
+            return [x - MOVEMENT_C, y, z + MOVEMENT_C];
+          });
+        } else if (key === 'a') {
+          moveDispatch({ type: 'rotate_L' });
+          moveDispatch({ type: 'move_L' });
+
+          setPos((prev) => {
+            const [x, y, z] = prev;
+            return [x - MOVEMENT_C, y, z];
+          });
+        } else if (key === 'w') {
+          moveDispatch({ type: 'move_U' });
+          setPos((prev) => {
+            const [x, y, z] = prev;
+            return [x, y, z - MOVEMENT_C];
+          });
+        } else if (key === 's') {
+          moveDispatch({ type: 'move_D' });
+          setPos((prev) => {
+            const [x, y, z] = prev;
+            return [x, y, z + MOVEMENT_C];
+          });
+        }
+      };
+
+      const keyUpFunction = (event) => {
+        const { key } = event;
+        if (event.isComposing) return;
+        setKeys((prev) => {
+          const newObj = { ...prev };
+          if (newObj[key]) delete newObj[key];
+          return newObj;
+        });
+        if (key === 'd') {
+          moveDispatch({ type: 'resetRotation' });
+        }
+        if (key === 'a') {
+          moveDispatch({ type: 'resetRotation' });
+        }
+      };
+
+      const keyDownListener = document.addEventListener(
+        'keydown',
+        keyDownFunction
+      );
+      const keyUpListener = document.addEventListener('keyup', keyUpFunction);
+
+      return () => {
+        document.removeEventListener(keyUpListener, keyUpFunction);
+        document.removeEventListener(keyDownListener, keyDownFunction);
+      };
+    }
+  }, [group.current, rotate_R, rotate_L, move_U, move_D, move_L, move_R]);
+
   return (
-    <group
+    <animated.group
       ref={group}
       {...props}
       dispose={null}
       scale={5}
-      rotation={[-Math.PI / 2, 0, 0]}
+      rotation={rotation}
+      position={position}
     >
       <group name="Sketchfab_Scene">
         <group name="Sketchfab_model">
           <group
             name="851ef2b194494e539ad187404fbe584bfbx"
-            rotation={[Math.PI / 2, 0, 0]}
+            rotation={[-Math.PI / 2, 0, 0]}
           >
             <group name="Object_2">
               <group name="RootNode">
@@ -99,7 +224,7 @@ export default function Fighter(props) {
           </group>
         </group>
       </group>
-    </group>
+    </animated.group>
   );
 }
 
