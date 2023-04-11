@@ -7,16 +7,14 @@ title: PIXEL PLANE
 */
 
 import React, { useEffect, useRef, useState, useReducer } from 'react';
-import { useGLTF, useAnimations } from '@react-three/drei';
+import { useGLTF, useAnimations, Sphere } from '@react-three/drei';
 import { useSpring, animated } from '@react-spring/three';
+import { useFrame } from '@react-three/fiber';
+import { useSphere } from '@react-three/cannon';
 
 const initialMovementState = {
   rotate_L: false,
   rotate_R: false,
-  move_U: false,
-  move_D: false,
-  move_L: false,
-  move_R: false,
 };
 
 function movementReducer(state, action) {
@@ -25,14 +23,6 @@ function movementReducer(state, action) {
       return { ...state, rotate_L: true, rotate_R: false };
     case 'rotate_R':
       return { ...state, rotate_R: true, rotate_L: false };
-    case 'move_U':
-      return { ...state, move_U: true, move_D: false };
-    case 'move_D':
-      return { ...state, move_D: !state.move_D, move_U: false };
-    case 'move_L':
-      return { ...state, move_L: true, move_L: false };
-    case 'move_R':
-      return { ...state, move_R: true, move_L: false };
 
     case 'resetRotation': {
       return {
@@ -49,119 +39,112 @@ function movementReducer(state, action) {
 }
 
 export default function Fighter(props) {
-  const group = useRef();
-  const { nodes, materials, animations } = useGLTF('/3dModels/pixel_plane.glb');
-  const { actions } = useAnimations(animations, group);
-
   const ROTATION_C = 0.5;
-  const MOVEMENT_C = 0.5;
+  const MOVEMENT_C = 10;
 
   const [pos, setPos] = useState([0, 0, 0]);
   const [keys, setKeys] = useState({});
+  const [collision, setCollision] = useState();
+  const lastPosition = useRef();
   const [moveState, moveDispatch] = useReducer(
     movementReducer,
     initialMovementState
   );
 
   const { rotate_L, rotate_R, move_U, move_D, move_L, move_R } = moveState;
-  const [x, y, z] = pos;
+
   const { rotation, position } = useSpring({
     rotation: rotate_R
       ? [Math.PI / 2, -ROTATION_C, 0]
       : rotate_L
       ? [Math.PI / 2, ROTATION_C, 0]
       : [Math.PI / 2, 0, 0],
-    position: move_U
-      ? [x, y, z - MOVEMENT_C]
-      : move_D
-      ? [x, y, z + MOVEMENT_C]
-      : move_U && move_R
-      ? [x + MOVEMENT_C, y, z - MOVEMENT_C]
-      : move_U && move_L
-      ? [x - MOVEMENT_C, y, z - MOVEMENT_C]
-      : move_L
-      ? [x - MOVEMENT_C, y, z]
-      : move_L && move_D
-      ? [x - MOVEMENT_C, y, z + MOVEMENT_C]
-      : move_R
-      ? [x + MOVEMENT_C, y, z]
-      : move_R && move_D
-      ? [x + MOVEMENT_C, y, z - MOVEMENT_C]
-      : [x, y, z],
+    position: pos,
   });
+  const [body, api] = useSphere(() => ({
+    // create a dynamic body with a sphere shape and set its radius
+    type: 'Dynamic',
+    mass: 0,
+    position: position.get(),
+    // rotation: rotation.get(),
+    // args: [50, 50, 50],
+    onCollide: (e) => {
+      if (e.body.name === 'Boundary') {
+        console.log(body);
+        // lastPosition.current = e.target.position;
+        // setCollision(true);
+      }
+    },
+    onCollideEnd: (e) => {
+      setCollision(false);
+    },
+  }));
 
+  // const group = useRef();
+  const { nodes, materials, animations } = useGLTF('/3dModels/pixel_plane.glb');
+  const { actions } = useAnimations(animations, body);
+  useFrame(({ clock }) => {
+    // Get current position of the ship
+    const [x, y, z] = pos;
+
+    // Move the ship based on user input
+    let dx = 0,
+      dz = 0;
+    if (!keys.a && !keys.d) {
+      moveDispatch({ type: 'resetRotation' });
+    }
+    if (keys.a) {
+      dx -= 1;
+      moveDispatch({ type: 'rotate_L' });
+    }
+    if (keys.d) {
+      moveDispatch({ type: 'rotate_R' });
+      dx += 1;
+    }
+    if (keys.w) dz -= 1;
+    if (keys.s) dz += 1;
+    if (dx !== 0 || dz !== 0) {
+      const length = Math.sqrt(dx * dx + dz * dz);
+
+      setPos([
+        x + (MOVEMENT_C * dx) / length,
+        y,
+        z + (MOVEMENT_C * dz) / length,
+      ]);
+
+      api.position.set(
+        x + (MOVEMENT_C * dx) / length,
+        y,
+        z + (MOVEMENT_C * dz) / length + 30
+      );
+
+      api.rotation.set(...rotation.get());
+
+      // api.position.set(
+      //   x + (MOVEMENT_C * dx) / length,
+      //   y,
+      //   z + (MOVEMENT_C * dz) / length
+      // );
+    }
+  });
   useEffect(() => {
-    console.table(keys);
     actions['ArmatureAction.001'].play();
-    if (group.current && moveState) {
+    if (body.current) {
       const keyDownFunction = (event) => {
-        if (event.isComposing) return;
-
         const { key } = event;
         setKeys((prev) => {
           return { ...prev, [key]: true };
         });
-        if (keys.w && key === 'd') {
-          moveDispatch({ type: 'rotate_R' });
-          moveDispatch({ type: 'move_R' });
-          moveDispatch({ type: 'move_U' });
-          setPos((prev) => {
-            const [x, y, z] = prev;
-            return [x + MOVEMENT_C, y, z - MOVEMENT_C];
-          });
-        } else if (key === 'd') {
-          moveDispatch({ type: 'rotate_R' });
-          moveDispatch({ type: 'move_R' });
-
-          setPos((prev) => {
-            const [x, y, z] = prev;
-            return [x + MOVEMENT_C, y, z];
-          });
-        } else if (keys.w && key === 'a') {
-          moveDispatch({ type: 'rotate_L' });
-          moveDispatch({ type: 'move_L' });
-          moveDispatch({ type: 'move_U' });
-          setPos((prev) => {
-            const [x, y, z] = prev;
-            return [x - MOVEMENT_C, y, z + MOVEMENT_C];
-          });
-        } else if (key === 'a') {
-          moveDispatch({ type: 'rotate_L' });
-          moveDispatch({ type: 'move_L' });
-
-          setPos((prev) => {
-            const [x, y, z] = prev;
-            return [x - MOVEMENT_C, y, z];
-          });
-        } else if (key === 'w') {
-          moveDispatch({ type: 'move_U' });
-          setPos((prev) => {
-            const [x, y, z] = prev;
-            return [x, y, z - MOVEMENT_C];
-          });
-        } else if (key === 's') {
-          moveDispatch({ type: 'move_D' });
-          setPos((prev) => {
-            const [x, y, z] = prev;
-            return [x, y, z + MOVEMENT_C];
-          });
-        }
       };
 
       const keyUpFunction = (event) => {
         const { key } = event;
-        if (event.isComposing) return;
+
         setKeys((prev) => {
           const newObj = { ...prev };
           if (newObj[key]) delete newObj[key];
           return newObj;
         });
-        if (key === 'd') {
-          moveDispatch({ type: 'resetRotation' });
-        }
-        if (key === 'a') {
-          moveDispatch({ type: 'resetRotation' });
-        }
       };
 
       const keyDownListener = document.addEventListener(
@@ -175,56 +158,60 @@ export default function Fighter(props) {
         document.removeEventListener(keyDownListener, keyDownFunction);
       };
     }
-  }, [group.current, rotate_R, rotate_L, move_U, move_D, move_L, move_R]);
+  }, [body.current, rotation.get(), pos]);
 
   return (
-    <animated.group
-      ref={group}
-      {...props}
-      dispose={null}
-      scale={5}
-      rotation={rotation}
-      position={position}
-    >
-      <group name="Sketchfab_Scene">
-        <group name="Sketchfab_model">
-          <group
-            name="851ef2b194494e539ad187404fbe584bfbx"
-            rotation={[-Math.PI / 2, 0, 0]}
-          >
-            <group name="Object_2">
-              <group name="RootNode">
-                <group
-                  name="Armature"
-                  rotation={[-Math.PI / 2, 0, 0]}
-                  // scale={100}
-                >
-                  <group name="Object_6">
-                    <primitive object={nodes._rootJoint} />
-                    <group
-                      name="Object_8"
-                      rotation={[-Math.PI / 2, 0, 0]}
-                      // scale={100}
-                    />
-                    <skinnedMesh
-                      name="Object_9"
-                      geometry={nodes.Object_9.geometry}
-                      material={materials['Material.026']}
-                      skeleton={nodes.Object_9.skeleton}
-                    />
+    <>
+      {/* <Sphere args={[40, 40, 40]} ref={body} name="fighter boundary" /> */}
+      <animated.group
+        ref={body}
+        {...props}
+        dispose={null}
+        scale={5}
+        rotation={rotation}
+        position={position}
+        name="Fighter"
+      >
+        <group name="Sketchfab_Scene">
+          <group name="Sketchfab_model">
+            <group
+              name="851ef2b194494e539ad187404fbe584bfbx"
+              rotation={[-Math.PI / 2, 0, 0]}
+            >
+              <group name="Object_2">
+                <group name="RootNode">
+                  <group
+                    name="Armature"
+                    rotation={[-Math.PI / 2, 0, 0]}
+                    // scale={100}
+                  >
+                    <group name="Object_6">
+                      <primitive object={nodes._rootJoint} />
+                      <group
+                        name="Object_8"
+                        rotation={[-Math.PI / 2, 0, 0]}
+                        // scale={100}
+                      />
+                      <skinnedMesh
+                        name="Object_9"
+                        geometry={nodes.Object_9.geometry}
+                        material={materials['Material.026']}
+                        skeleton={nodes.Object_9.skeleton}
+                      />
+                    </group>
                   </group>
+                  <group
+                    name="Cube000"
+                    rotation={[-Math.PI / 2, 0, 0]}
+                    // scale={100}
+                  />
                 </group>
-                <group
-                  name="Cube000"
-                  rotation={[-Math.PI / 2, 0, 0]}
-                  // scale={100}
-                />
               </group>
             </group>
           </group>
         </group>
-      </group>
-    </animated.group>
+      </animated.group>
+    </>
   );
 }
 
