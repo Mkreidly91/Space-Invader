@@ -15,6 +15,10 @@ import { useSphere } from '@react-three/cannon';
 const initialMovementState = {
   rotate_L: false,
   rotate_R: false,
+  move_U: true,
+  move_D: true,
+  move_L: true,
+  move_R: true,
 };
 
 function movementReducer(state, action) {
@@ -23,6 +27,14 @@ function movementReducer(state, action) {
       return { ...state, rotate_L: true, rotate_R: false };
     case 'rotate_R':
       return { ...state, rotate_R: true, rotate_L: false };
+    case 'move_U':
+      return { ...state, move_U: !state.move_U };
+    case 'move_D':
+      return { ...state, move_U: !state.move_D };
+    case 'move_L':
+      return { ...state, move_U: !state.move_L };
+    case 'move_R':
+      return { ...state, move_U: !state.move_R };
 
     case 'resetRotation': {
       return {
@@ -32,19 +44,29 @@ function movementReducer(state, action) {
         rotate_R: false,
       };
     }
-
+    case 'resetMovement':
+      return {
+        ...state,
+        move_U: true,
+        move_D: true,
+        move_L: true,
+        move_R: true,
+      };
     case 'default':
       throw new Error('No such case exists');
   }
 }
 
 export default function Fighter(props) {
+  const group = useRef();
+  const { nodes, materials, animations } = useGLTF('/3dModels/pixel_plane.glb');
+  const { actions } = useAnimations(animations, group);
   const ROTATION_C = 0.5;
   const MOVEMENT_C = 10;
 
   const [pos, setPos] = useState([0, 0, 0]);
   const [keys, setKeys] = useState({});
-  const [collision, setCollision] = useState();
+  const [collision, setCollision] = useState(false);
   const lastPosition = useRef();
   const [moveState, moveDispatch] = useReducer(
     movementReducer,
@@ -66,23 +88,20 @@ export default function Fighter(props) {
     type: 'Dynamic',
     mass: 0,
     position: position.get(),
-    // rotation: rotation.get(),
-    // args: [50, 50, 50],
+    args: [60, 60, 60],
+    rotation: rotation.get(),
     onCollide: (e) => {
+      console.log('collided');
       if (e.body.name === 'Boundary') {
-        console.log(body);
-        // lastPosition.current = e.target.position;
-        // setCollision(true);
+        setCollision(true);
       }
     },
+    collisionResponse: true,
     onCollideEnd: (e) => {
       setCollision(false);
     },
   }));
 
-  // const group = useRef();
-  const { nodes, materials, animations } = useGLTF('/3dModels/pixel_plane.glb');
-  const { actions } = useAnimations(animations, body);
   useFrame(({ clock }) => {
     // Get current position of the ship
     const [x, y, z] = pos;
@@ -119,17 +138,12 @@ export default function Fighter(props) {
       );
 
       api.rotation.set(...rotation.get());
-
-      // api.position.set(
-      //   x + (MOVEMENT_C * dx) / length,
-      //   y,
-      //   z + (MOVEMENT_C * dz) / length
-      // );
     }
   });
   useEffect(() => {
+    //console.log(pos);
     actions['ArmatureAction.001'].play();
-    if (body.current) {
+    if (group.current) {
       const keyDownFunction = (event) => {
         const { key } = event;
         setKeys((prev) => {
@@ -158,13 +172,13 @@ export default function Fighter(props) {
         document.removeEventListener(keyDownListener, keyDownFunction);
       };
     }
-  }, [body.current, rotation.get(), pos]);
+  }, [group.current, pos]);
 
   return (
-    <>
-      {/* <Sphere args={[40, 40, 40]} ref={body} name="fighter boundary" /> */}
+    <group>
+      {/* <Sphere ref={body} args={[60, 60, 60]} name="fighter boundary" /> */}
       <animated.group
-        ref={body}
+        ref={group}
         {...props}
         dispose={null}
         scale={5}
@@ -192,6 +206,7 @@ export default function Fighter(props) {
                         rotation={[-Math.PI / 2, 0, 0]}
                         // scale={100}
                       />
+
                       <skinnedMesh
                         name="Object_9"
                         geometry={nodes.Object_9.geometry}
@@ -211,7 +226,7 @@ export default function Fighter(props) {
           </group>
         </group>
       </animated.group>
-    </>
+    </group>
   );
 }
 
