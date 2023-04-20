@@ -86,9 +86,9 @@ export default function Fighter(props) {
     // create a dynamic body with a sphere shape and set its radius
     type: 'Dynamic',
     mass: 0,
-    position: position.get(),
+    position: pos,
     args: [60, 60, 60],
-    rotation: rotation.get(),
+
     onCollide: (e) => {
       const [x, y, z] = e.contact.contactNormal;
       if (x) {
@@ -143,12 +143,9 @@ export default function Fighter(props) {
         y,
         z + (MOVEMENT_C * dz) / length + 30
       );
-
-      api.rotation.set(...rotation.get());
     }
   });
   useEffect(() => {
-    //console.log(pos);
     actions['ArmatureAction.001'].play();
     if (group.current) {
       const keyDownFunction = (event) => {
@@ -201,18 +198,10 @@ export default function Fighter(props) {
             >
               <group name="Object_2">
                 <group name="RootNode">
-                  <group
-                    name="Armature"
-                    rotation={[-Math.PI / 2, 0, 0]}
-                    // scale={100}
-                  >
+                  <group name="Armature" rotation={[-Math.PI / 2, 0, 0]}>
                     <group name="Object_6">
                       <primitive object={nodes._rootJoint} />
-                      <group
-                        name="Object_8"
-                        rotation={[-Math.PI / 2, 0, 0]}
-                        // scale={100}
-                      />
+                      <group name="Object_8" rotation={[-Math.PI / 2, 0, 0]} />
 
                       <skinnedMesh
                         name="Object_9"
@@ -222,11 +211,7 @@ export default function Fighter(props) {
                       />
                     </group>
                   </group>
-                  <group
-                    name="Cube000"
-                    rotation={[-Math.PI / 2, 0, 0]}
-                    // scale={100}
-                  />
+                  <group name="Cube000" rotation={[-Math.PI / 2, 0, 0]} />
                 </group>
               </group>
             </group>
