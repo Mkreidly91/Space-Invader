@@ -30,11 +30,11 @@ function movementReducer(state, action) {
     case 'move_U':
       return { ...state, move_U: !state.move_U };
     case 'move_D':
-      return { ...state, move_U: !state.move_D };
+      return { ...state, move_D: !state.move_D };
     case 'move_L':
-      return { ...state, move_U: !state.move_L };
+      return { ...state, move_L: !state.move_L };
     case 'move_R':
-      return { ...state, move_U: !state.move_R };
+      return { ...state, move_R: !state.move_R };
 
     case 'resetRotation': {
       return {
@@ -66,8 +66,7 @@ export default function Fighter(props) {
 
   const [pos, setPos] = useState([0, 0, 0]);
   const [keys, setKeys] = useState({});
-  const [collision, setCollision] = useState(false);
-  const lastPosition = useRef();
+
   const [moveState, moveDispatch] = useReducer(
     movementReducer,
     initialMovementState
@@ -91,14 +90,23 @@ export default function Fighter(props) {
     args: [60, 60, 60],
     rotation: rotation.get(),
     onCollide: (e) => {
-      console.log('collided');
+      const [x, y, z] = e.contact.contactNormal;
+      if (x) {
+        if (x < 0) moveDispatch({ type: 'move_R' });
+        else if (x > 0) moveDispatch({ type: 'move_L' });
+      }
+      if (z) {
+        if (z < 0) moveDispatch({ type: 'move_D' });
+        else if (z > 0) moveDispatch({ type: 'move_U' });
+      }
+
       if (e.body.name === 'Boundary') {
         setCollision(true);
       }
     },
     collisionResponse: true,
     onCollideEnd: (e) => {
-      setCollision(false);
+      moveDispatch({ type: 'resetMovement' });
     },
   }));
 
@@ -113,18 +121,17 @@ export default function Fighter(props) {
       moveDispatch({ type: 'resetRotation' });
     }
     if (keys.a) {
-      dx -= 1;
+      dx = move_L ? -1 : 0;
       moveDispatch({ type: 'rotate_L' });
     }
     if (keys.d) {
       moveDispatch({ type: 'rotate_R' });
-      dx += 1;
+      dx = move_R ? 1 : 0;
     }
-    if (keys.w) dz -= 1;
-    if (keys.s) dz += 1;
+    if (keys.w) dz = move_U ? -1 : 0;
+    if (keys.s) dz = move_D ? 1 : 0;
     if (dx !== 0 || dz !== 0) {
       const length = Math.sqrt(dx * dx + dz * dz);
-
       setPos([
         x + (MOVEMENT_C * dx) / length,
         y,
