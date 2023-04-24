@@ -7,10 +7,10 @@ title: PIXEL PLANE
 */
 
 import React, { useEffect, useRef, useState, useReducer } from 'react';
-import { useGLTF, useAnimations, Sphere } from '@react-three/drei';
+import { useGLTF, useAnimations, Sphere, Box } from '@react-three/drei';
 import { useSpring, animated } from '@react-spring/three';
 import { useFrame } from '@react-three/fiber';
-import { useSphere } from '@react-three/cannon';
+import { useBox, useSphere } from '@react-three/cannon';
 
 const initialMovementState = {
   rotate_L: false,
@@ -85,12 +85,14 @@ export default function Fighter(props) {
   const [body, api] = useSphere(() => ({
     // create a dynamic body with a sphere shape and set its radius
     type: 'Dynamic',
-    mass: 0,
+    mass: 1,
     position: pos,
+    rotation: [Math.PI / 2, 0, 0],
     args: [60, 60, 60],
 
     onCollide: (e) => {
       const [x, y, z] = e.contact.contactNormal;
+
       if (x) {
         if (x < 0) moveDispatch({ type: 'move_R' });
         else if (x > 0) moveDispatch({ type: 'move_L' });
@@ -99,14 +101,26 @@ export default function Fighter(props) {
         if (z < 0) moveDispatch({ type: 'move_D' });
         else if (z > 0) moveDispatch({ type: 'move_U' });
       }
-
-      if (e.body.name === 'Boundary') {
-        setCollision(true);
-      }
     },
-    collisionResponse: true,
+    collisionResponse: false,
     onCollideEnd: (e) => {
-      moveDispatch({ type: 'resetMovement' });
+      const { name } = e.body;
+      switch (name) {
+        case 'Top':
+          moveDispatch({ type: 'move_U' });
+          break;
+        case 'Bottom':
+          moveDispatch({ type: 'move_D' });
+          break;
+        case 'Left':
+          moveDispatch({ type: 'move_L' });
+          break;
+        case 'Right':
+          moveDispatch({ type: 'move_R' });
+          break;
+        default:
+          moveDispatch({ type: 'resetMovement' });
+      }
     },
   }));
 
@@ -132,6 +146,7 @@ export default function Fighter(props) {
     if (keys.s) dz = move_D ? 1 : 0;
     if (dx !== 0 || dz !== 0) {
       const length = Math.sqrt(dx * dx + dz * dz);
+
       setPos([
         x + (MOVEMENT_C * dx) / length,
         y,
@@ -179,46 +194,43 @@ export default function Fighter(props) {
   }, [group.current, pos]);
 
   return (
-    <group>
-      {/* <Sphere ref={body} args={[60, 60, 60]} name="fighter boundary" /> */}
-      <animated.group
-        ref={group}
-        {...props}
-        dispose={null}
-        scale={5}
-        rotation={rotation}
-        position={position}
-        name="Fighter"
-      >
-        <group name="Sketchfab_Scene">
-          <group name="Sketchfab_model">
-            <group
-              name="851ef2b194494e539ad187404fbe584bfbx"
-              rotation={[-Math.PI / 2, 0, 0]}
-            >
-              <group name="Object_2">
-                <group name="RootNode">
-                  <group name="Armature" rotation={[-Math.PI / 2, 0, 0]}>
-                    <group name="Object_6">
-                      <primitive object={nodes._rootJoint} />
-                      <group name="Object_8" rotation={[-Math.PI / 2, 0, 0]} />
+    <animated.group
+      ref={group}
+      {...props}
+      dispose={null}
+      scale={5}
+      rotation={rotation}
+      position={position}
+      name="Fighter"
+    >
+      <group name="Sketchfab_Scene">
+        <group name="Sketchfab_model">
+          <group
+            name="851ef2b194494e539ad187404fbe584bfbx"
+            rotation={[-Math.PI / 2, 0, 0]}
+          >
+            <group name="Object_2">
+              <group name="RootNode">
+                <group name="Armature" rotation={[-Math.PI / 2, 0, 0]}>
+                  <group name="Object_6">
+                    <primitive object={nodes._rootJoint} />
+                    <group name="Object_8" rotation={[-Math.PI / 2, 0, 0]} />
 
-                      <skinnedMesh
-                        name="Object_9"
-                        geometry={nodes.Object_9.geometry}
-                        material={materials['Material.026']}
-                        skeleton={nodes.Object_9.skeleton}
-                      />
-                    </group>
+                    <skinnedMesh
+                      name="Object_9"
+                      geometry={nodes.Object_9.geometry}
+                      material={materials['Material.026']}
+                      skeleton={nodes.Object_9.skeleton}
+                    />
                   </group>
-                  <group name="Cube000" rotation={[-Math.PI / 2, 0, 0]} />
                 </group>
+                <group name="Cube000" rotation={[-Math.PI / 2, 0, 0]} />
               </group>
             </group>
           </group>
         </group>
-      </animated.group>
-    </group>
+      </group>
+    </animated.group>
   );
 }
 

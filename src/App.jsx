@@ -2,14 +2,19 @@ import { OrbitControls, PerspectiveCamera, Stars } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
 import Fighter from './Components/Fighter';
 import './App.css';
-import { Suspense, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { CameraHelper } from 'three';
 import { Map } from './Components/map';
 import { Physics } from '@react-three/cannon';
+import Laser from './Components/Weapons/Laser';
 
 function App() {
+  const app = useRef();
+  useEffect(() => {
+    console.log(app.current.offsetWidth);
+  });
   return (
-    <div className="App">
+    <div ref={app} className="App">
       <Canvas className="canvas" style={{ background: 'black' }}>
         <ambientLight intensity={0.5} />
         <OrbitControls />
@@ -28,8 +33,9 @@ function App() {
           speed={0.2}
         />
         <Physics gravity={[0, 0, 0]}>
-          <Map position={[0, 0, -300]} dimensions={[100, 100, 100]} />
+          <Map />
           <Suspense>
+            <Laser />
             <Fighter />
           </Suspense>
         </Physics>
