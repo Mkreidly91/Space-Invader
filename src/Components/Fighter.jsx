@@ -19,6 +19,7 @@ const initialMovementState = {
   move_D: true,
   move_L: true,
   move_R: true,
+  shoot: false,
 };
 
 function movementReducer(state, action) {
@@ -27,19 +28,26 @@ function movementReducer(state, action) {
       return { ...state, rotate_L: true, rotate_R: false };
     case 'rotate_R':
       return { ...state, rotate_R: true, rotate_L: false };
-    case 'move_U':
-      return { ...state, move_U: !state.move_U };
-    case 'move_D':
-      return { ...state, move_D: !state.move_D };
-    case 'move_L':
-      return { ...state, move_L: !state.move_L };
-    case 'move_R':
-      return { ...state, move_R: !state.move_R };
+    case 'move_U_ON':
+      return { ...state, move_U: true };
+    case 'move_D_ON':
+      return { ...state, move_D: true };
+    case 'move_L_ON':
+      return { ...state, move_L: true };
+    case 'move_R_ON':
+      return { ...state, move_R: true };
+    case 'move_U_OFF':
+      return { ...state, move_U: false };
+    case 'move_D_OFF':
+      return { ...state, move_D: false };
+    case 'move_L_OFF':
+      return { ...state, move_L: false };
+    case 'move_R_OFF':
+      return { ...state, move_R: false };
 
     case 'resetRotation': {
       return {
         ...state,
-
         rotate_L: false,
         rotate_R: false,
       };
@@ -52,6 +60,8 @@ function movementReducer(state, action) {
         move_L: true,
         move_R: true,
       };
+    case 'shoot':
+
     case 'default':
       throw new Error('No such case exists');
   }
@@ -63,8 +73,8 @@ export default function Fighter(props) {
   const { actions } = useAnimations(animations, group);
   const ROTATION_C = 0.5;
   const MOVEMENT_C = 10;
-
-  const [pos, setPos] = useState([0, 0, 0]);
+  const [fighterPos, setFighterPos] = useState([0, 0, 0]);
+  const { setPos } = props;
   const [keys, setKeys] = useState({});
 
   const [moveState, moveDispatch] = useReducer(
@@ -80,53 +90,60 @@ export default function Fighter(props) {
       : rotate_L
       ? [Math.PI / 2, ROTATION_C, 0]
       : [Math.PI / 2, 0, 0],
-    position: pos,
+    position: fighterPos,
   });
+
   const [body, api] = useSphere(() => ({
     // create a dynamic body with a sphere shape and set its radius
     type: 'Dynamic',
     mass: 1,
-    position: pos,
+    position: position.get(),
     rotation: [Math.PI / 2, 0, 0],
     args: [60, 60, 60],
 
     onCollide: (e) => {
-      const [x, y, z] = e.contact.contactNormal;
+      console.log(`collided with ${e.body.userData.type}`);
+      if (e.body?.userData.type === 'boundary') {
+        const [x, y, z] = e.contact.contactNormal;
 
-      if (x) {
-        if (x < 0) moveDispatch({ type: 'move_R' });
-        else if (x > 0) moveDispatch({ type: 'move_L' });
-      }
-      if (z) {
-        if (z < 0) moveDispatch({ type: 'move_D' });
-        else if (z > 0) moveDispatch({ type: 'move_U' });
+        if (x) {
+          if (x < 0) moveDispatch({ type: 'move_R_OFF' });
+          else if (x > 0) moveDispatch({ type: 'move_L_OFF' });
+        }
+        if (z) {
+          if (z < 0) moveDispatch({ type: 'move_D_OFF' });
+          else if (z > 0) moveDispatch({ type: 'move_U_OFF' });
+        }
       }
     },
+    collisionFilterGroup: 2,
     collisionResponse: false,
+
     onCollideEnd: (e) => {
-      const { name } = e.body;
-      switch (name) {
-        case 'Top':
-          moveDispatch({ type: 'move_U' });
-          break;
-        case 'Bottom':
-          moveDispatch({ type: 'move_D' });
-          break;
-        case 'Left':
-          moveDispatch({ type: 'move_L' });
-          break;
-        case 'Right':
-          moveDispatch({ type: 'move_R' });
-          break;
-        default:
-          moveDispatch({ type: 'resetMovement' });
+      console.log(`ended collision with ${e.body.userData.type}`);
+      if (e.body?.userData?.type === 'boundary') {
+        const { name } = e.body;
+        switch (name) {
+          case 'Top':
+            moveDispatch({ type: 'move_U_ON' });
+            break;
+          case 'Bottom':
+            moveDispatch({ type: 'move_D_ON' });
+            break;
+          case 'Left':
+            moveDispatch({ type: 'move_L_ON' });
+            break;
+          case 'Right':
+            moveDispatch({ type: 'move_R_ON' });
+            break;
+        }
       }
     },
   }));
 
   useFrame(({ clock }) => {
     // Get current position of the ship
-    const [x, y, z] = pos;
+    const [x, y, z] = fighterPos;
 
     // Move the ship based on user input
     let dx = 0,
@@ -147,12 +164,11 @@ export default function Fighter(props) {
     if (dx !== 0 || dz !== 0) {
       const length = Math.sqrt(dx * dx + dz * dz);
 
-      setPos([
+      setFighterPos([
         x + (MOVEMENT_C * dx) / length,
         y,
         z + (MOVEMENT_C * dz) / length,
       ]);
-
       api.position.set(
         x + (MOVEMENT_C * dx) / length,
         y,
@@ -171,6 +187,7 @@ export default function Fighter(props) {
       };
 
       const keyUpFunction = (event) => {
+        event.preventDefault();
         const { key } = event;
 
         setKeys((prev) => {
@@ -191,13 +208,13 @@ export default function Fighter(props) {
         document.removeEventListener(keyDownListener, keyDownFunction);
       };
     }
-  }, [group.current, pos]);
+  }, [group.current, position, moveState]);
 
   return (
     <animated.group
       ref={group}
-      {...props}
       dispose={null}
+      {...props}
       scale={5}
       rotation={rotation}
       position={position}

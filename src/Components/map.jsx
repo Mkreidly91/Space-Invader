@@ -36,7 +36,8 @@ export function Map() {
         name="Top"
         args={[width, 50, 50]}
         position={[0, 0, -height / 2]}
-        visible={false}
+        visible={true}
+        userData={{ type: 'boundary' }}
       >
         <meshStandardMaterial color="red" />
       </Box>
@@ -45,7 +46,8 @@ export function Map() {
         ref={bottom}
         position={[0, 0, height / 2]}
         args={[width, 50, 50]}
-        visible={false}
+        visible={true}
+        userData={{ type: 'boundary' }}
       >
         <meshStandardMaterial color="blue" />
       </Box>
@@ -55,7 +57,8 @@ export function Map() {
         position={[-width / 2, 0, 0]}
         args={[50, 50, height]}
         color={'blue'}
-        visible={false}
+        visible={true}
+        userData={{ type: 'boundary' }}
       />
       <Box
         ref={right}
@@ -63,7 +66,8 @@ export function Map() {
         position={[width / 2, 0, 0]}
         args={[50, 50, height]}
         color={'blue'}
-        visible={false}
+        visible={true}
+        userData={{ type: 'boundary' }}
       />
     </group>
   );
