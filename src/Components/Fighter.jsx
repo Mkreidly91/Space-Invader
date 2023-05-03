@@ -102,7 +102,7 @@ export default function Fighter(props) {
     args: [60, 60, 60],
 
     onCollide: (e) => {
-      console.log(`collided with ${e.body.userData.type}`);
+      // console.log(`collided with ${e.body.userData.type}`);
       if (e.body?.userData.type === 'boundary') {
         const [x, y, z] = e.contact.contactNormal;
 
@@ -120,7 +120,6 @@ export default function Fighter(props) {
     collisionResponse: false,
 
     onCollideEnd: (e) => {
-      console.log(`ended collision with ${e.body.userData.type}`);
       if (e.body?.userData?.type === 'boundary') {
         const { name } = e.body;
         switch (name) {
@@ -169,6 +168,7 @@ export default function Fighter(props) {
         y,
         z + (MOVEMENT_C * dz) / length,
       ]);
+
       api.position.set(
         x + (MOVEMENT_C * dx) / length,
         y,
@@ -180,6 +180,7 @@ export default function Fighter(props) {
     actions['ArmatureAction.001'].play();
     if (group.current) {
       const keyDownFunction = (event) => {
+        event.stopPropagation();
         const { key } = event;
         setKeys((prev) => {
           return { ...prev, [key]: true };
@@ -187,7 +188,7 @@ export default function Fighter(props) {
       };
 
       const keyUpFunction = (event) => {
-        event.preventDefault();
+        event.stopPropagation();
         const { key } = event;
 
         setKeys((prev) => {
@@ -208,7 +209,7 @@ export default function Fighter(props) {
         document.removeEventListener(keyDownListener, keyDownFunction);
       };
     }
-  }, [group.current, position, moveState]);
+  }, []);
 
   return (
     <animated.group

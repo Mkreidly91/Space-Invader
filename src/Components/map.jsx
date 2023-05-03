@@ -35,7 +35,6 @@ export function Map() {
         ref={top}
         name="Top"
         args={[width, 50, 50]}
-        position={[0, 0, -height / 2]}
         visible={true}
         userData={{ type: 'boundary' }}
       >
@@ -44,7 +43,6 @@ export function Map() {
       <Box
         name={'Bottom'}
         ref={bottom}
-        position={[0, 0, height / 2]}
         args={[width, 50, 50]}
         visible={true}
         userData={{ type: 'boundary' }}
@@ -54,7 +52,6 @@ export function Map() {
       <Box
         ref={left}
         name={'Left'}
-        position={[-width / 2, 0, 0]}
         args={[50, 50, height]}
         color={'blue'}
         visible={true}
@@ -63,7 +60,6 @@ export function Map() {
       <Box
         ref={right}
         name={'Right'}
-        position={[width / 2, 0, 0]}
         args={[50, 50, height]}
         color={'blue'}
         visible={true}

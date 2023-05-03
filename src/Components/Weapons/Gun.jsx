@@ -1,55 +1,53 @@
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useState } from 'react';
 import { MathUtils } from 'three';
 import Laser from './Laser';
+import short from 'short-uuid';
 export default function Gun({ pos }) {
   //start with an empty state, that will contain all the bullets.
   //add a bullet everytime you shoot
   //remove the bullet on collision, by passing down the state setter to the bullet.
 
+  const [index, setIndex] = useState(0);
   const [bullets, setBullets] = useState([]);
-  const [newBullet, setNewBullet] = useState([]);
-  const [shoot, setShoot] = useState(false);
-  const [cooldown, setCoolDown] = useState(false);
-  const [c, setC] = useState(0);
-
-  function fire() {
-    setTimeout(() => {
-      setBullets((prev) => [<Laser fighterPosition={pos} cleanUp={cleanUp} />]);
-    }, 500);
-  }
-  function cleanUp(uuid) {
-    setBullets(bullets.filter((b) => b.uuid !== uuid));
+  const [cooldown, setCooldown] = useState(false);
+  //console.log(bullets.map((b) => b.props.id));
+  function cleanUp(id) {
+    setBullets((prev) => {
+      return prev.filter((b) => b.props.id !== id);
+    });
   }
   useEffect(() => {
-    const shootfn = (e) => {
-      e.preventDefault();
+    const keyDownFn = (e) => {
+      e.stopPropagation();
       if (e.key === ' ' && !cooldown) {
-        setCoolDown(true);
-        setShoot(true);
-        // fire();
+        // if (e.repeat) return;
+        setCooldown(true);
+        setBullets((prev) => [
+          ...prev,
+          <Laser
+            key={short.generate()}
+            id={short.generate()}
+            cleanUp={cleanUp}
+          />,
+        ]);
+        setIndex((prev) => prev + 1);
       }
     };
-    const shoot = document.addEventListener('keydown', shootfn);
 
-    const stopfn = (e) => {
-      e.preventDefault();
-      if (e.key === ' ') {
-        setCoolDown(false);
-        setShoot(false);
-      }
+    const keyUpFn = (e) => {
+      e.stopPropagation();
+      if (e.key === ' ') setCooldown(false);
     };
-    const stop = document.addEventListener('keyup', stopfn);
+
+    document.addEventListener('keydown', keyDownFn);
+    document.addEventListener('keyup', keyUpFn);
+
     return () => {
-      document.removeEventListener(shoot, shootfn);
-      document.removeEventListener(stop, stopfn);
+      document.removeEventListener('keydown', keyDownFn);
+      document.removeEventListener('keyup', keyUpFn);
     };
-  });
-  useFrame(() => {
-    if (shoot) {
-      fire();
-    }
-  });
+  }, [bullets, cooldown]);
 
   return bullets;
 }
