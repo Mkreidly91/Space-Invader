@@ -8,12 +8,16 @@ import { Map } from './Components/map';
 import { Physics } from '@react-three/cannon';
 import Laser from './Components/Weapons/Laser';
 import Gun from './Components/Weapons/Gun';
+import Boss from './Components/Boss';
+import Boss_Blob from './Components/Weapons/Boss_Blob';
+import Boss2 from './Components/Boss2';
+import KrakenEye from './Components/KrakenEye';
 function App() {
   const app = useRef();
 
   return (
     <div ref={app} className="App">
-      <Canvas className="canvas" style={{ background: 'black' }}>
+      <Canvas className="canvas" style={{ background: 'white' }}>
         <ambientLight intensity={0.5} />
         <OrbitControls />
         <PerspectiveCamera
@@ -35,6 +39,9 @@ function App() {
           <Suspense>
             <Fighter />
             <Gun />
+            {/* <Boss_Blob /> */}
+            {/* <Boss2 /> */}
+            <KrakenEye />
           </Suspense>
         </Physics>
       </Canvas>

@@ -23,7 +23,9 @@ export default function Laser({ cleanUp, id }) {
     mass: 1,
     rotation: [Math.PI / 2, 0, 0],
     onCollideBegin: (e) => {
-      if (e.body?.userData.type === 'boundary') {
+      const type = e.body?.userData.type;
+      console.log(type);
+      if (type === 'boundary' || type === 'enemy') {
         cleanUp(id);
 
         setCollision(true);

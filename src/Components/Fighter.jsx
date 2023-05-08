@@ -100,6 +100,9 @@ export default function Fighter(props) {
     position: position.get(),
     rotation: [Math.PI / 2, 0, 0],
     args: [60, 60, 60],
+    userData: {
+      name: 'Fighter',
+    },
 
     onCollide: (e) => {
       // console.log(`collided with ${e.body.userData.type}`);
