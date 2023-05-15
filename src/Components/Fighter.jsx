@@ -72,9 +72,8 @@ export default function Fighter(props) {
   const { nodes, materials, animations } = useGLTF('/3dModels/pixel_plane.glb');
   const { actions } = useAnimations(animations, group);
   const ROTATION_C = 0.5;
-  const MOVEMENT_C = 10;
+  let MOVEMENT_C = 10;
   const [fighterPos, setFighterPos] = useState([0, 0, 0]);
-  const { setPos } = props;
   const [keys, setKeys] = useState({});
 
   const [moveState, moveDispatch] = useReducer(
@@ -83,6 +82,8 @@ export default function Fighter(props) {
   );
 
   const { rotate_L, rotate_R, move_U, move_D, move_L, move_R } = moveState;
+
+  const [speed, setSpeed] = useState(10);
 
   const { rotation, position } = useSpring({
     rotation: rotate_R
@@ -121,8 +122,15 @@ export default function Fighter(props) {
     },
     collisionFilterGroup: 2,
     collisionResponse: false,
+    onCollideBegin: (e) => {
+      if (e.body?.userData?.type === 'BossWeapon') {
+        // if (e.body.userData.name === 'Beam') {
+        //   setSpeed(5);
+      }
+    },
 
     onCollideEnd: (e) => {
+      console.log(e.body.userData.name);
       if (e.body?.userData?.type === 'boundary') {
         const { name } = e.body;
         switch (name) {
@@ -139,10 +147,15 @@ export default function Fighter(props) {
             moveDispatch({ type: 'move_R_ON' });
             break;
         }
+      } else if (e.body?.userData?.type === 'BossWeapon') {
+        if (e.body.userData.name === 'Beam') {
+          setSpeed(10);
+        }
       }
     },
   }));
 
+  console.log(speed);
   useFrame(({ clock }) => {
     // Get current position of the ship
     const [x, y, z] = fighterPos;
@@ -166,16 +179,12 @@ export default function Fighter(props) {
     if (dx !== 0 || dz !== 0) {
       const length = Math.sqrt(dx * dx + dz * dz);
 
-      setFighterPos([
-        x + (MOVEMENT_C * dx) / length,
-        y,
-        z + (MOVEMENT_C * dz) / length,
-      ]);
+      setFighterPos([x + (speed * dx) / length, y, z + (speed * dz) / length]);
 
       api.position.set(
-        x + (MOVEMENT_C * dx) / length,
+        x + (speed * dx) / length,
         y,
-        z + (MOVEMENT_C * dz) / length + 30
+        z + (speed * dz) / length + 30
       );
     }
   });

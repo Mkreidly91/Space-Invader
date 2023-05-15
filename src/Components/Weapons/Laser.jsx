@@ -6,6 +6,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { BufferGeometry, CylinderGeometry, MathUtils } from 'three';
 
 const SPEED = -10;
+
 export default function Laser({ cleanUp, id }) {
   const { scene } = useThree();
   const sound = useMemo(() => new Audio('/audio/laser.mp3'), []);
@@ -23,9 +24,10 @@ export default function Laser({ cleanUp, id }) {
     mass: 1,
     rotation: [Math.PI / 2, 0, 0],
     onCollideBegin: (e) => {
-      const type = e.body?.userData.type;
+      const type = e.body.userData?.type;
       console.log(type);
-      if (type === 'boundary' || type === 'enemy') {
+
+      if (type === 'boundary' || type === 'Boss') {
         cleanUp(id);
 
         setCollision(true);

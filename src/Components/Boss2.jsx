@@ -11,6 +11,9 @@ export default function Boss2(props) {
   const group = useRef();
   const { scene } = useThree();
   const { nodes, materials } = useGLTF('/3dModels/mecanic_eye.glb');
+  const color = new Color(101, 28, 50);
+
+  console.log(materials);
   const [hp, setHp] = useState(100);
   const [position, setPosition] = useState([0, 0, -300]);
   const [collision, setCollision] = useState(false);
@@ -87,6 +90,7 @@ export default function Boss2(props) {
           geometry={nodes.Object_2.geometry}
           material={materials.OjoInterior}
         />
+
         <mesh
           castShadow
           receiveShadow
@@ -100,6 +104,7 @@ export default function Boss2(props) {
           material={materials.OjosExterior}
         />
       </group>
+      <Beam />
     </animated.group>
   );
 }

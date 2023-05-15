@@ -9,15 +9,27 @@ import { Physics } from '@react-three/cannon';
 import Laser from './Components/Weapons/Laser';
 import Gun from './Components/Weapons/Gun';
 import Boss from './Components/Boss';
-import Boss_Blob from './Components/Weapons/Boss_Blob';
+import Boss_Blob from './Components/Weapons/MagmaBall';
 import Boss2 from './Components/Boss2';
 import KrakenEye from './Components/KrakenEye';
+import Beam from './Components/Weapons/Beam';
+
+import {
+  EffectComposer,
+  DepthOfField,
+  Bloom,
+  Noise,
+  Vignette,
+} from '@react-three/postprocessing';
 function App() {
   const app = useRef();
 
   return (
     <div ref={app} className="App">
-      <Canvas className="canvas" style={{ background: 'white' }}>
+      <Canvas
+        className="canvas"
+        style={{ background: 'black', width: '100%', height: '100%' }}
+      >
         <ambientLight intensity={0.5} />
         <OrbitControls />
         <PerspectiveCamera
@@ -34,13 +46,13 @@ function App() {
           fade={false}
           speed={0.2}
         />
+
         <Physics gravity={[0, 0, 0]}>
           <Map />
           <Suspense>
             <Fighter />
             <Gun />
-            {/* <Boss_Blob /> */}
-            {/* <Boss2 /> */}
+
             <KrakenEye />
           </Suspense>
         </Physics>

@@ -13,6 +13,7 @@
     "@react-three/cannon": "^6.5.2",
     "@react-three/drei": "^9.61.1",
     "@react-three/fiber": "^8.12.0",
+    "@react-three/postprocessing": "^2.11.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "short-uuid": "^4.2.2",
