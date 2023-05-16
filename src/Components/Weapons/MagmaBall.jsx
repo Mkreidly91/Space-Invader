@@ -36,7 +36,7 @@ export default function MagmaBall({ position, id, removeRock }) {
     type: 'Dynamic',
     args: [30, 30, 30],
     position: position,
-    userData: { name: 'MagmaBall', type: 'BossWeapon' },
+    userData: { name: 'MagmaBall', type: 'BossWeapon', damage: 10 },
     onCollideBegin: (e) => {
       const { name, type } = e.body.userData;
       if (type === 'boundary' || name === 'Fighter') {

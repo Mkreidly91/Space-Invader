@@ -2,7 +2,7 @@ import { OrbitControls, PerspectiveCamera, Stars } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
 import Fighter from './Components/Fighter';
 import './App.css';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useContext, useEffect, useRef, useState } from 'react';
 import { CameraHelper } from 'three';
 import { Map } from './Components/map';
 import { Physics } from '@react-three/cannon';
@@ -13,7 +13,7 @@ import Boss_Blob from './Components/Weapons/MagmaBall';
 import Boss2 from './Components/Boss2';
 import KrakenEye from './Components/KrakenEye';
 import Beam from './Components/Weapons/Beam';
-
+import GameOverText from './Components/GameOverText';
 import {
   EffectComposer,
   DepthOfField,
@@ -21,9 +21,11 @@ import {
   Noise,
   Vignette,
 } from '@react-three/postprocessing';
+import { GameContext } from './Components/GameContext';
+
 function App() {
   const app = useRef();
-
+  const { gameOver } = useContext(GameContext);
   return (
     <div ref={app} className="App">
       <Canvas
@@ -46,15 +48,15 @@ function App() {
           fade={false}
           speed={0.2}
         />
-
+        {/* <GameOverText /> */}
         <Physics gravity={[0, 0, 0]}>
           <Map />
-          <Suspense>
-            <Fighter />
-            <Gun />
-
-            <KrakenEye />
-          </Suspense>
+          {!gameOver && (
+            <Suspense>
+              <Fighter />
+              <KrakenEye />
+            </Suspense>
+          )}
         </Physics>
       </Canvas>
     </div>

@@ -1,8 +1,9 @@
-import { react, useEffect, useRef, useState } from 'react';
+import { react, useEffect, useRef, useState, useContext, useMemo } from 'react';
 import {
   Box,
   Cylinder,
   Sphere,
+  Text,
   useAnimations,
   useGLTF,
 } from '@react-three/drei';
@@ -10,11 +11,11 @@ import { useBox, useSphere } from '@react-three/cannon';
 import { Color, MathUtils, Quaternion, Vector3 } from 'three';
 import { act, useFrame, useLoader, useThree } from '@react-three/fiber';
 import { useSpring, animated } from '@react-spring/three';
-
+import BossHp from './BossHp';
 import Beam from './Weapons/Beam';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { useMemo } from 'react';
 import MagmaSpawner from './Weapons/MagmaSpawner';
+import { GameContext } from './GameContext';
 
 export default function KrakenEye(props) {
   const group = useRef();
@@ -23,17 +24,25 @@ export default function KrakenEye(props) {
     () => useGLTF('/3dModels/kraken_eyeball.glb'),
     []
   );
+
   const red = new Color(101, 28, 50);
   const yellow = new Color(255, 250, 31);
   materials['KRAKEN-EYE'].color = red;
   materials['KRAKEN-EYE'].emissive = red;
 
   // const gltf = useLoader(GLTFLoader, '/3dModels/kraken_eyeball.glb');
-  const [hp, setHp] = useState(100);
+  const [hp, setHp] = useState(1000);
   const [position, setPosition] = useState([0, 0, -300]);
   const [scale, setScale] = useState(100);
-
   const [shoot, setShoot] = useState(false);
+
+  const { setGameOver } = useContext(GameContext);
+  useEffect(() => {
+    if (hp <= 0) {
+      setGameOver(true);
+    }
+  }, [hp]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       if (!shoot) {
@@ -45,8 +54,9 @@ export default function KrakenEye(props) {
     return () => clearInterval(interval);
   }, [shoot]);
 
-  const { pos } = useSpring({
+  const { pos, springScale } = useSpring({
     pos: position,
+    springScale: scale,
   });
 
   const bossMovement = ({ boss, api, clock, fighterPosition, shoot }) => {
@@ -56,9 +66,11 @@ export default function KrakenEye(props) {
 
     const t = clock.getElapsedTime(); // Get the elapsed time since the start of the application
     const d = Math.sin(t) * 200;
-    boss.position.lerp(new Vector3(x, d, bossPosition.z), 0.005);
-    setPosition(bossPosition.toArray());
-    api.position.copy(bossPosition);
+    if (!shoot) {
+      boss.position.lerp(new Vector3(x, d, bossPosition.z), 0.005);
+      setPosition(bossPosition.toArray());
+      api.position.copy(bossPosition);
+    }
 
     //Boss rotation
     const clone = boss.clone();
@@ -102,15 +114,18 @@ export default function KrakenEye(props) {
   const [boss_X, boss_Y, boss_Z] = position;
   return (
     <>
+      <BossHp position={position} health={hp} />
+
       <MagmaSpawner />
       <animated.group
         ref={group}
-        scale={100}
+        scale={scale}
         position={position}
         {...props}
         dispose={null}
         name={'Boss'}
       >
+        {/* <Text color={'red'}>HELLO</Text> */}
         <group rotation={[-Math.PI / 2, 0, 0]}>
           <group rotation={[Math.PI / 2, 0, 0]}>
             <mesh

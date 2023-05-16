@@ -24,12 +24,10 @@ export default function Laser({ cleanUp, id }) {
     mass: 1,
     rotation: [Math.PI / 2, 0, 0],
     onCollideBegin: (e) => {
-      const type = e.body.userData?.type;
-      console.log(type);
+      const type = e.body?.userData?.type;
 
       if (type === 'boundary' || type === 'Boss') {
         cleanUp(id);
-
         setCollision(true);
       }
     },

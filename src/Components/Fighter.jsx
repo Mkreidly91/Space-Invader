@@ -11,6 +11,8 @@ import { useGLTF, useAnimations, Sphere, Box } from '@react-three/drei';
 import { useSpring, animated } from '@react-spring/three';
 import { useFrame } from '@react-three/fiber';
 import { useBox, useSphere } from '@react-three/cannon';
+import Gun from './Weapons/Gun';
+import FighterHp from './FighterHp';
 
 const initialMovementState = {
   rotate_L: false,
@@ -75,7 +77,8 @@ export default function Fighter(props) {
   let MOVEMENT_C = 10;
   const [fighterPos, setFighterPos] = useState([0, 0, 0]);
   const [keys, setKeys] = useState({});
-
+  const [hp, setHp] = useState(100);
+  console.log(hp);
   const [moveState, moveDispatch] = useReducer(
     movementReducer,
     initialMovementState
@@ -121,16 +124,29 @@ export default function Fighter(props) {
       }
     },
     collisionFilterGroup: 2,
-    collisionResponse: false,
+    collisionResponse: true,
     onCollideBegin: (e) => {
       if (e.body?.userData?.type === 'BossWeapon') {
-        // if (e.body.userData.name === 'Beam') {
-        //   setSpeed(5);
+        const name = e.body.userData.name;
+        switch (name) {
+          case 'Beam':
+            console.log('Beam hit');
+            const interval = setInterval(() => {
+              setHp((prev) => prev - 5);
+            }, 200);
+            setTimeout(() => {
+              clearInterval(interval);
+            }, 1000);
+            break;
+
+          case 'MagmaBall':
+            setHp((prev) => prev - 10);
+            break;
+        }
       }
     },
 
     onCollideEnd: (e) => {
-      console.log(e.body.userData.name);
       if (e.body?.userData?.type === 'boundary') {
         const { name } = e.body;
         switch (name) {
@@ -148,14 +164,10 @@ export default function Fighter(props) {
             break;
         }
       } else if (e.body?.userData?.type === 'BossWeapon') {
-        if (e.body.userData.name === 'Beam') {
-          setSpeed(10);
-        }
       }
     },
   }));
 
-  console.log(speed);
   useFrame(({ clock }) => {
     // Get current position of the ship
     const [x, y, z] = fighterPos;
@@ -224,43 +236,47 @@ export default function Fighter(props) {
   }, []);
 
   return (
-    <animated.group
-      ref={group}
-      dispose={null}
-      {...props}
-      scale={5}
-      rotation={rotation}
-      position={position}
-      name="Fighter"
-    >
-      <group name="Sketchfab_Scene">
-        <group name="Sketchfab_model">
-          <group
-            name="851ef2b194494e539ad187404fbe584bfbx"
-            rotation={[-Math.PI / 2, 0, 0]}
-          >
-            <group name="Object_2">
-              <group name="RootNode">
-                <group name="Armature" rotation={[-Math.PI / 2, 0, 0]}>
-                  <group name="Object_6">
-                    <primitive object={nodes._rootJoint} />
-                    <group name="Object_8" rotation={[-Math.PI / 2, 0, 0]} />
+    <>
+      <Gun />
+      <FighterHp position={fighterPos} health={hp} />
+      <animated.group
+        ref={group}
+        dispose={null}
+        {...props}
+        scale={5}
+        rotation={rotation}
+        position={position}
+        name="Fighter"
+      >
+        <group name="Sketchfab_Scene">
+          <group name="Sketchfab_model">
+            <group
+              name="851ef2b194494e539ad187404fbe584bfbx"
+              rotation={[-Math.PI / 2, 0, 0]}
+            >
+              <group name="Object_2">
+                <group name="RootNode">
+                  <group name="Armature" rotation={[-Math.PI / 2, 0, 0]}>
+                    <group name="Object_6">
+                      <primitive object={nodes._rootJoint} />
+                      <group name="Object_8" rotation={[-Math.PI / 2, 0, 0]} />
 
-                    <skinnedMesh
-                      name="Object_9"
-                      geometry={nodes.Object_9.geometry}
-                      material={materials['Material.026']}
-                      skeleton={nodes.Object_9.skeleton}
-                    />
+                      <skinnedMesh
+                        name="Object_9"
+                        geometry={nodes.Object_9.geometry}
+                        material={materials['Material.026']}
+                        skeleton={nodes.Object_9.skeleton}
+                      />
+                    </group>
                   </group>
+                  <group name="Cube000" rotation={[-Math.PI / 2, 0, 0]} />
                 </group>
-                <group name="Cube000" rotation={[-Math.PI / 2, 0, 0]} />
               </group>
             </group>
           </group>
         </group>
-      </group>
-    </animated.group>
+      </animated.group>
+    </>
   );
 }
 

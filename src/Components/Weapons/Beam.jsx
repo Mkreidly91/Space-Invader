@@ -10,13 +10,21 @@ import { react, useState, useEffect } from 'react';
 import { Color, MathUtils, MeshStandardMaterial, Vector3 } from 'three';
 
 export default function Beam({ shoot }) {
+  const [collisionResponse, setCollisionResponse] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCollisionResponse(true);
+    }, 1000);
+  }, []);
+
   const [ref, api] = useCylinder(() => ({
     type: 'Static',
     args: [0.1, 0.1, 20],
     position: [0, 0, 10.8],
     rotation: [-Math.PI / 2, 0, 0],
-    userData: { name: 'Beam', type: 'BossWeapon' },
-
+    userData: { name: 'Beam', type: 'BossWeapon', damage: 10 },
+    collisionResponse: collisionResponse,
     onCollideBegin: (e) => {},
   }));
   const [beamR, beamR_API] = useCylinder(() => ({
@@ -24,8 +32,8 @@ export default function Beam({ shoot }) {
     args: [0.1, 0.1, 20],
     position: [5, 0, 9.5],
     rotation: [-Math.PI / 2, 0, Math.PI / 6],
-    userData: { name: 'Beam', type: 'BossWeapon' },
-
+    userData: { name: 'Beam', type: 'BossWeapon', damage: 10 },
+    collisionResponse: collisionResponse,
     onCollideBegin: (e) => {},
   }));
   const [beamL, beamL_API] = useCylinder(() => ({
@@ -33,8 +41,8 @@ export default function Beam({ shoot }) {
     args: [0.1, 0.1, 20],
     position: [-5, 0, 9.5],
     rotation: [-Math.PI / 2, 0, -Math.PI / 6],
-    userData: { name: 'Beam', type: 'BossWeapon' },
-
+    userData: { name: 'Beam', type: 'BossWeapon', damage: 10 },
+    collisionResponse: collisionResponse,
     onCollideBegin: (e) => {},
   }));
 
