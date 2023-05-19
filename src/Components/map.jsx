@@ -12,59 +12,37 @@ export function Map() {
     type: 'Static',
     position: [0, 0, -getCurrentViewport().height / 2],
     args: [getCurrentViewport().width, 50, 50],
+    userData: { type: 'boundary', name: 'Top' },
   }));
   const [bottom] = useBox(() => ({
     type: 'Static',
     position: [0, 0, getCurrentViewport().height / 2],
     args: [getCurrentViewport().width, 50, 50],
+    userData: { type: 'boundary', name: 'Bottom' },
   }));
   const [left] = useBox(() => ({
     type: 'Static',
     position: [-getCurrentViewport().width / 2, 0, 0],
     args: [50, 50, getCurrentViewport().height],
+    userData: { type: 'boundary', name: 'Left' },
   }));
   const [right] = useBox(() => ({
     type: 'Static',
     position: [getCurrentViewport().width / 2, 0, 0],
     args: [50, 50, getCurrentViewport().height],
+    userData: { type: 'boundary', name: 'Right' },
   }));
 
   return (
     <group position={[0, 0, 0]}>
-      <Box
-        ref={top}
-        name="Top"
-        args={[width, 50, 50]}
-        visible={true}
-        userData={{ type: 'boundary' }}
-      >
+      <Box ref={top} name="Top" args={[width, 50, 50]} visible={true}>
         <meshStandardMaterial color="red" />
       </Box>
-      <Box
-        name={'Bottom'}
-        ref={bottom}
-        args={[width, 50, 50]}
-        visible={true}
-        userData={{ type: 'boundary' }}
-      >
+      <Box name={'Bottom'} ref={bottom} args={[width, 50, 50]} visible={true}>
         <meshStandardMaterial color="blue" />
       </Box>
-      <Box
-        ref={left}
-        name={'Left'}
-        args={[50, 50, height]}
-        color={'blue'}
-        visible={true}
-        userData={{ type: 'boundary' }}
-      />
-      <Box
-        ref={right}
-        name={'Right'}
-        args={[50, 50, height]}
-        color={'blue'}
-        visible={true}
-        userData={{ type: 'boundary' }}
-      />
+      <Box ref={left} args={[50, 50, height]} color={'blue'} visible={true} />
+      <Box ref={right} args={[50, 50, height]} color={'blue'} visible={true} />
     </group>
   );
 }

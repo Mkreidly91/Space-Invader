@@ -13,6 +13,7 @@ import { useFrame } from '@react-three/fiber';
 import { useBox, useSphere } from '@react-three/cannon';
 import Gun from './Weapons/Gun';
 import FighterHp from './FighterHp';
+import { MeshStandardMaterial } from 'three';
 
 const initialMovementState = {
   rotate_L: false,
@@ -78,7 +79,7 @@ export default function Fighter(props) {
   const [fighterPos, setFighterPos] = useState([0, 0, 0]);
   const [keys, setKeys] = useState({});
   const [hp, setHp] = useState(100);
-  console.log(hp);
+
   const [moveState, moveDispatch] = useReducer(
     movementReducer,
     initialMovementState
@@ -101,16 +102,16 @@ export default function Fighter(props) {
     // create a dynamic body with a sphere shape and set its radius
     type: 'Dynamic',
     mass: 1,
-    position: position.get(),
+    position: [0, 0, 0],
     rotation: [Math.PI / 2, 0, 0],
     args: [60, 60, 60],
+
     userData: {
       name: 'Fighter',
     },
-
+    wireframe: true,
     onCollide: (e) => {
-      // console.log(`collided with ${e.body.userData.type}`);
-      if (e.body?.userData.type === 'boundary') {
+      if (e.body?.userData?.type === 'boundary') {
         const [x, y, z] = e.contact.contactNormal;
 
         if (x) {
@@ -124,23 +125,20 @@ export default function Fighter(props) {
       }
     },
     collisionFilterGroup: 2,
-    collisionResponse: true,
+    collisionResponse: false,
     onCollideBegin: (e) => {
-      if (e.body?.userData?.type === 'BossWeapon') {
-        const name = e.body.userData.name;
+      const { type, name, visible } = e.body.userData;
+      if (type === 'BossWeapon') {
         switch (name) {
           case 'Beam':
-            console.log('Beam hit');
-            const interval = setInterval(() => {
-              setHp((prev) => prev - 5);
-            }, 200);
-            setTimeout(() => {
-              clearInterval(interval);
-            }, 1000);
+            if (visible) {
+              setHp((prev) => prev - 10);
+            }
+
             break;
 
           case 'MagmaBall':
-            setHp((prev) => prev - 10);
+            // setHp((prev) => prev - 10);
             break;
         }
       }
@@ -148,7 +146,8 @@ export default function Fighter(props) {
 
     onCollideEnd: (e) => {
       if (e.body?.userData?.type === 'boundary') {
-        const { name } = e.body;
+        const name = e.body.userData.name;
+
         switch (name) {
           case 'Top':
             moveDispatch({ type: 'move_U_ON' });

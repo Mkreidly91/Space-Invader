@@ -5,7 +5,7 @@ import './App.css';
 import { Suspense, useContext, useEffect, useRef, useState } from 'react';
 
 import { Map } from './Components/map';
-import { Physics } from '@react-three/cannon';
+import { Debug, Physics } from '@react-three/cannon';
 
 import KrakenEye from './Components/KrakenEye';
 
@@ -44,14 +44,16 @@ function App() {
           speed={0.2}
         />
         {/* <GameOverText /> */}
-        <Physics gravity={[0, 0, 0]}>
-          <Map />
-          {!gameOver && (
-            <Suspense>
-              <Fighter />
-              <KrakenEye />
-            </Suspense>
-          )}
+        <Physics gravity={[0, 0, 0]} broadphase="Naive">
+          <Debug color={'green'}>
+            <Map />
+            {!gameOver && (
+              <Suspense>
+                <Fighter />
+                <KrakenEye />
+              </Suspense>
+            )}
+          </Debug>
         </Physics>
       </Canvas>
     </div>

@@ -1,10 +1,12 @@
 import { Html } from '@react-three/drei';
-import { useState, useEffect } from 'react';
-
+import { useState, useEffect, useContext } from 'react';
+import { GameContext } from './GameContext';
 export default function FighterHp({
   position: [fighter_X, fighter_Y, fighter_Z],
-  health,
 }) {
+  const {
+    fighter: [fighterHp],
+  } = useContext(GameContext);
   return (
     <Html
       position={[-300, 0, 300]}
@@ -21,7 +23,7 @@ export default function FighterHp({
         style={{
           backgroundColor: 'green',
           height: '100%',
-          width: `${health > 0 ? health : 0}%`,
+          width: `${fighterHp > 0 ? fighterHp : 0}%`,
         }}
       ></div>
     </Html>

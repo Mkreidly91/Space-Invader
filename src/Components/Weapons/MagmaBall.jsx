@@ -18,7 +18,6 @@ export default function MagmaBall({ position, id, removeRock }) {
     displacementMap: '/textures/Lava/Displacement.jpg',
     normalMap: '/textures/Lava/NormalGL.jpg',
     roughnessMap: '/textures/Lava/Roughness.jpg',
-    // aoMap: '/textures/Lava/OCC.jpg',
     emissiveMap: '/textures/Lava/Emission.jpg',
   });
 

@@ -67,7 +67,7 @@ export default function KrakenEye(props) {
     const t = clock.getElapsedTime(); // Get the elapsed time since the start of the application
     const d = Math.sin(t) * 200;
     if (!shoot) {
-      boss.position.lerp(new Vector3(x, d, bossPosition.z), 0.005);
+      boss.position.lerp(new Vector3(x, 0, bossPosition.z), 0.001);
       setPosition(bossPosition.toArray());
       api.position.copy(bossPosition);
     }
@@ -98,6 +98,7 @@ export default function KrakenEye(props) {
         setHp((prev) => prev - 10);
       }
     },
+    collisionResponse: false,
   }));
 
   useFrame(({ clock }) => {
@@ -125,7 +126,6 @@ export default function KrakenEye(props) {
         dispose={null}
         name={'Boss'}
       >
-        {/* <Text color={'red'}>HELLO</Text> */}
         <group rotation={[-Math.PI / 2, 0, 0]}>
           <group rotation={[Math.PI / 2, 0, 0]}>
             <mesh
@@ -139,8 +139,9 @@ export default function KrakenEye(props) {
               geometry={nodes.Object_4.geometry}
               material={materials['KRAKEN-EYE']}
             />
-            {shoot && <Beam />}
           </group>
+
+          <Beam shoot={shoot} />
         </group>
       </animated.group>
     </>
